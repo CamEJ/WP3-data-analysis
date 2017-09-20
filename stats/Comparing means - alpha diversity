@@ -1,0 +1,168 @@
+# Comparing means - alpha diversity WP3 data
+
+## using ouput from 
+#mothur > summary.single(shared=stability.opti_mcc.shared, calc=nseqs-coverage-sobs-invsimpson-simpsoneven-chao, subsample=n)
+
+library(dunn.test)
+
+setwd("C:/Users/Camilla/Dropbox/Data & analysis/WP3 Slurry disturbance/Microbial Community Analyses/DNA_16S/combining all tps")
+
+pd = read.table("stability.opti_mcc.groups.ave-std.summary", sep = "\t", header=T)
+meta = read.table("metadataCombined-S.txt", sep = "\t", header=T)
+rownames(meta) = meta$group
+d = read.table("ALL_stability.opti_mcc.groups.ave-std.summary", sep = "\t", header=T)
+# my simpson even was is diff file to rest of alpha div metrics hence
+# the second table called pd. 
+
+d = d[2:89,] # choose just rows with ave and cut out std rows 
+rownames(d) = d$group # specify row names
+pd = pd[1:88,] # do same for simpson even df
+rownames(d) = d$group # again assign row names
+
+
+d$simpsoneven = pd$simpsoneven # make new column in orignial alpha div w simpeven data
+d$percov <- with(d, coverage *100) # make a new column with coverage expressed as %
+
+d1 = d[c(1:6,13:88),] # cut out second T0 samples
+# now make df with just the metrics you want to plot
+
+do = subset(d1, select=c(percov,sobs,chao,simpsoneven,invsimpson))
+
+head(do)
+
+# =============== cut two dropped samples from metadata file
+
+
+rejects = c("T7_Tmt3_a","T3_Tmt3_c")
+
+meta1 = subset(meta, !rownames(meta) %in% rejects)
+meta1 = meta1[c(1:6,13:88),] # cut out second T0 samples
+
+# now metadata file and df with alpha div in shuld have same no of obs. 
+
+# == add metadata to data frame of alpha metrics. 
+
+do$phase = meta1$Phase
+do$treatment = meta1$Treatment
+
+
+# ======================================= coverage:
+
+site = do$treatment # define your variables for test
+                    # how samples are grouped into tmts
+
+H <- do$percov # define variable
+tapply(H, INDEX=site, FUN=shapiro.test)
+# if no p > 0.05 then normally distributed and can continue to aov
+
+Haov = aov(H ~ site)
+summary(Haov)
+
+# p is 0.158 so no diffs
+
+
+# ============================== sobs:
+
+site = do$treatment
+
+H <- do$sobs
+tapply(H, INDEX=site, FUN=shapiro.test)
+# if no p > 0.05 then normally distributed and can continue to aov
+
+Haov = aov(H ~ site)
+summary(Haov)
+
+# p is 0.00113 so do Tukey post hoc
+
+TukeyHSD(Haov)
+
+# diff        lwr       upr     p adj
+# Flood-Control         223.97291  -65.00895 512.95478 0.1842567
+# Flood+Slurry-Control  422.67780  133.69593 711.65966 0.0013967
+# Slurry-Control         52.24421 -210.91473 315.40314 0.9537523
+# Flood+Slurry-Flood    198.70488 -113.97453 511.38429 0.3472761
+# Slurry-Flood         -171.72871 -460.71057 117.25316 0.4072788
+# Slurry-Flood+Slurry  -370.43359 -659.41546 -81.45172 0.0064025
+
+kruskal.test(H ~ site) # did kruskal too as some borderline p vals with normality test
+# p-value = 0.001964
+
+dunn.test(H, site,
+         method="bh") 
+# 
+# Kruskal-Wallis chi-squared = 14.8338, df = 3, p-value = 0
+# Comparison of H by site                            
+# (Benjamini-Hochberg)                              
+# Col Mean-|
+#   Row Mean |    Control      Flood   Flood+Sl
+# ---------+---------------------------------
+#   Flood |  -2.194021
+# |     0.0282
+# |
+#   Flood+Sl |  -3.666658  -1.361027
+# |    0.0007*     0.1301
+# |
+#   Slurry |  -1.115171   1.178499   2.651136
+# |     0.1324     0.1432    0.0120*
+
+
+# same answer. 
+
+# ============================== chao1:
+
+site = do$treatment
+
+H <- do$chao
+tapply(H, INDEX=site, FUN=shapiro.test)
+# if no p > 0.05 then normally distributed and can continue to aov
+
+Haov = aov(H ~ site)
+summary(Haov)
+
+# p is 0.177
+
+# ============================== simp even :
+
+site = do$treatment
+
+H <- do$simpsoneven
+tapply(H, INDEX=site, FUN=shapiro.test)
+# if no p > 0.05 then normally distributed and can continue to aov
+
+Haov = aov(H ~ site)
+summary(Haov)
+
+# p is 0.000116 so do Tukey
+
+TukeyHSD(Haov)
+# diff           lwr          upr     p adj
+# Flood-Control         0.0017441716 -0.0003857481 0.0038740912 0.1466942
+# Flood+Slurry-Control  0.0038812304  0.0017513107 0.0060111501 0.0000466
+# Slurry-Control        0.0021884583  0.0002488647 0.0041280520 0.0206801
+# Flood+Slurry-Flood    0.0021370588 -0.0001675219 0.0044416395 0.0789758
+# Slurry-Flood          0.0004442868 -0.0016856329 0.0025742064 0.9469259
+# Slurry-Flood+Slurry  -0.0016927721 -0.0038226917 0.0004371476 0.1665784
+
+# ============================== simp div:
+
+site = do$treatment
+
+H <- do$invsimpson
+tapply(H, INDEX=site, FUN=shapiro.test)
+# if no p > 0.05 then normally distributed and can continue to aov
+
+Haov = aov(H ~ site)
+summary(Haov)
+
+# p is 7.6e-06 so do Tukey
+
+TukeyHSD(Haov)
+
+# diff         lwr      upr     p adj
+# Flood-Control         7.933950  -1.0527860 16.92069 0.1027582
+# Flood+Slurry-Control 19.080235  10.0934988 28.06697 0.0000020
+# Slurry-Control        9.149549   0.9658524 17.33325 0.0222724
+# Flood+Slurry-Flood   11.146285   1.4226045 20.86997 0.0181384
+# Slurry-Flood          1.215599  -7.7711371 10.20233 0.9845352
+# Slurry-Flood+Slurry  -9.930686 -18.9174218 -0.94395 0.0244383
+
