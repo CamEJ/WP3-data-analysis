@@ -11,17 +11,26 @@ library("knitr")
 library("clustsig")
 library("ellipse")
 
-# will use subsampled file with 70 samples and 28815 seq subsample depth.
+## import metadata file
+metaFile = read.table('MetaDataSubSampled_1T0.txt', header=T, sep='\t')
+rownames(metaFile) = metaFile[,1]
+#metaFile1 = as.matrix(metaFile)
+#rownames(metaFile1) = metaFile1[,7]
+#metaFile2 = as.data.frame(metaFile1)
+metaFile = metaFile[,c(2,5:7)]
+head(metaFile)
 
-sharedsubFile = read.table('stability.opti_mcc.0.03.subsample.shared')
-sharedsubFile = t(sharedsubFile)
+sharedsubFile2 = read.table('stability.opti_mcc.0.03.subsample.shared')
+sharedsubFile = t(sharedsubFile2)
 rownames(sharedsubFile) = sharedsubFile[,1]
 colnames(sharedsubFile) = sharedsubFile[2,]
 dim(sharedsubFile) # [1] 87682    90
-sharedsubFile = sharedsubFile[,2:90]
+#sharedsubFile = sharedsubFile[,2:90] # all samples
 sharedsubFile = sharedsubFile[4:87682,]
+sharedsubFile = sharedsubFile[,c(2:8,15:90)] # removing extra T0 samples
 class(sharedsubFile) <- "numeric"
 head(sharedsubFile)
+#colnames(sharedsubFile) = row.names(metaFile) #metaFile$smallID
 
 taxFile = read.table('stability.cons.taxonomy', header=T, sep='\t')
 head(taxFile)
@@ -39,7 +48,7 @@ library(tibble)
 taxFile = taxFile[,1:2]
 taxo1 = add_column(taxo, taxFile$OTU, .before = 1) # rename
 taxo2 = add_column(taxo1, taxFile$Size, .before = 2) # rename
-
+head(taxo2)
 taxFile = taxo2
 colnames(taxFile)[2] <- "Size"
 colnames(taxFile)[1] <- "OTU"
@@ -51,11 +60,7 @@ taxFile = taxFile[,2:8]
 taxFile = as.matrix(taxFile)
 head(taxFile)
 
-## import metadata file
-metaFile = read.table('MetaDataSubSampled.txt', header=T, sep='\t')
-rownames(metaFile) = metaFile[,1]
-metaFile = metaFile[,2:6]
-head(metaFile)
+
 
 #metaFile$SamplingTime <- factor(metaFile$SamplingTime, levels = metaFile$SamplingTime)
 
@@ -78,15 +83,21 @@ trimSub <- prune_taxa(taxa_sums(physeqSub) > 1, physeqSub)
 microSubRel = transform_sample_counts(microSub, function(x) x / sum(x) )
 trimSubRel = transform_sample_counts(trimSub, function(x) x / sum(x) )
 
+trimSubRelFilt = filter_taxa(trimSubRel, function(x) mean(x) > 1e-3, TRUE)
+
+
 ## readout phyloseq object, untrimmed
-dat <- psmelt(microSubRel)
-write.csv(dat, file='untrimmedPhyloseqOTU_RelAbund.csv')
+dat <- psmelt(microSubRel) #
+write.csv(dat, file='untrimmedPhyloseqOTU_RelAbund_1T0.csv')
 
-dat <- psmelt(trimSub)
-write.csv(dat, file='NoSingPhyloseqOTU_Counts.csv')
+dat1 <- psmelt(trimSub)# 
+write.csv(dat1, file='NoSingPhyloseqOTU_Counts_1T0.csv')
 
-dat <- psmelt(trimSubRel)
-write.csv(dat, file='NoSingPhyloseqOTU_RelAbund.csv')
+dat2 <- psmelt(trimSubRel) #  done
+write.csv(dat2, file='NoSingPhyloseqOTU_RelAbund_1T0.csv')
+
+dat3 <- psmelt(trimSubRelFilt) # 
+write.csv(dat3, file='NoSingPhyloseqOTU_RelAbund_trim-3_1t0.csv')
 
 ## that csv can then be read again and used to make rel abund plot etc 
 ## using ggplot
