@@ -43,6 +43,12 @@ meta1 = meta1[c(1:6,13:88),] # cut out second T0 samples
 do$phase = meta1$Phase
 do$treatment = meta1$Treatment
 
+# note: for dunn.test it's possible to do p adjust in test
+# however, i want to adjust all p vals at once as I think
+# this is more strict and hopefully correct. 
+# ie all data that will  be shown in one plot will have it's 
+# p's adjusted together. instead of in 'batches'
+
 
 # ======================================= coverage:
 
@@ -57,7 +63,7 @@ kruskal.test(H ~ site) # did kruskal too as some borderline p vals with normalit
 # p-value = 0.03014
 
 dunn.test(H, site,
-          method="bh") 
+          method="none") 
 
 # Kruskal-Wallis rank sum test
 # 
@@ -70,13 +76,13 @@ dunn.test(H, site,
 # Row Mean |    Control      Flood   Flood+Sl
 # ---------+---------------------------------
 #   Flood |   1.509712
-#         |     0.0983
+#         |     0.0656
 #         |
 # Flood+Sl|   1.754414   0.173977
-#         |     0.0794     0.4309
+#         |     0.0394     0.4309
 #         |
 # Slurry  |  -0.848500  -2.268634  -2.539973
-#         |     0.2377     0.0349     0.0333
+#         |     0.1981     0.0116     0.005
 
 
 # ============================== sobs:
@@ -91,7 +97,7 @@ kruskal.test(H ~ site) # did kruskal too as some borderline p vals with normalit
 Haov = aov(H ~ site)
 summary(Haov)
 dunn.test(H, site,
-          method="bh") 
+          method="none") 
 
 # Kruskal-Wallis chi-squared = 14.6849, df = 3, p-value = 0
 # Comparison of H by site                            
@@ -100,13 +106,13 @@ dunn.test(H, site,
 # Row Mean  |    Control      Flood   Flood+Sl
 # ---------+---------------------------------
 # Flood   |  -2.420418
-#         |    0.0155*
+#         |    0.0078
 #         |
 # Flood+Sl|  -3.445236  -0.852913
-#         |    0.0017*     0.2362
+#         |    0.0003     0.1969
 #         |
 # Slurry  |  -0.830318   1.677759   2.676510
-#         |     0.2032     0.0700    0.0112*
+#         |     0.2032     0.0467    0.0037
 
 
 # ============================== chao1:
@@ -131,7 +137,7 @@ tapply(H, INDEX=site, FUN=shapiro.test)
 kruskal.test(H ~ site) # p = 9.608e-06
 # do post hoc dunn test
 dunn.test(H, site,
-          method="bh") 
+          method="none") 
 
 # Kruskal-Wallis chi-squared = 25.9846, df = 3, p-value = 0 
 # Comparison of H by site   (Benjamini-Hochberg)                          
@@ -139,13 +145,13 @@ dunn.test(H, site,
 # Row Mean |    Control      Flood   Flood+Sl
 # ---------+---------------------------------
 #     Flood |  -1.627625
-#           |     0.0622
+#           |     0.0518
 #           |
 # Flood+Sl  |  -4.905092  -2.922411
-#           |    0.0000*    0.0035*
+#           |    0.0000    0.0017
 #           |
 # Slurry    |  -3.251592  -1.280687   1.894703
-#           |    0.0017*     0.1002     0.0436
+#           |    0.0006     0.1002     0.0291
 
 # ============================== simp div:
 
@@ -157,17 +163,30 @@ tapply(H, INDEX=site, FUN=shapiro.test)
 kruskal.test(H ~ site) # p = 3.841e-06
 # do post hoc dunn test
 dunn.test(H, site,
-          method="bh") 
+          method="none") 
 #ouput:
 # Col Mean-|
 # Row Mean |    Control      Flood   Flood+Sl
 # ---------+---------------------------------
 # Flood     |  -2.122270
-#           |    0.0203*
+#           |    0.0169
 #           |
 # Flood+Sl  |  -5.233317  -2.755632
-#           |    0.0000*    0.0059*
+#           |    0.0000    0.0029
 #           |
 #   Slurry  |  -3.509793  -0.561060   2.455806
-#           |    0.0040*     0.2874    0.0105*
+#           |    0.0013     0.2874    0.0070
 
+# collate p vals
+
+
+p <- read.table("AlphaPval4Correction.txt", header = TRUE, sep="\t" )
+pvals <- p[,2] # defining column 2 of dataset as pvals
+
+# now adjust using fdr aka benjamini hochberg
+FDR = p.adjust(pvals, "fdr") # and least conservative false discovery rate
+
+p$fdr = FDR # add a column to your p val data with corrected vals
+
+# and write it bac out
+write.table(p, "AdjustedPval_alphaNOsing.txt", sep="\t") # write out table to wkdir
