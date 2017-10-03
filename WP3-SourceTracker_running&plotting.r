@@ -91,8 +91,12 @@ st <- sourcetracker(otus[train.ix,], envs[train.ix])
 # I initially got this error when I had only one source sample.
 # added a second and it worked a charm
 
-# Estimate source proportions in test data
+# Estimate source proportions in test data (read note below before doing this, re 'full results'
 results <- predict(st,otus[test.ix,], alpha1=alpha1, alpha2=alpha2)
+
+# if you want to get OTU ids need to add full.results=TRUE argument to this command. 
+#https://groups.google.com/forum/#!msg/qiime-forum/2Xn1niCHWaI/ob37bsE5UeUJ;context-place=topic/qiime-forum/EstvrrRmDfY
+results <- predict(st,otus[test.ix,], alpha1=alpha1, alpha2=alpha2, full.results=TRUE)
 
 # Estimate leave-one-out source proportions in training data 
 results.train <- predict(st, alpha1=alpha1, alpha2=alpha2)
@@ -110,6 +114,8 @@ plot(results, labels[test.ix], type='dist')
 
 # plot results with legend
 plot(results, labels[test.ix], type='pie', include.legend=TRUE, env.colors=c('#47697E','#5B7444','#CC6666','#79BEDB','#885588'))
+
+
 
 # ===================reading data out to plot more clearly======================
 
