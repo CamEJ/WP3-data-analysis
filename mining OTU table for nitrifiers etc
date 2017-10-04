@@ -1,0 +1,360 @@
+## WP3 specific bacterial groups abundance w phyloseq 
+
+
+#### Making biom type file with abundunce, taxonomy and metadata in one. 
+# then read it out into a csv so dont have to read in heavy mothur files each time 
+
+
+library("phyloseq")
+library("plyr")
+library("vegan")
+library("grid")
+library("directlabels")
+library("knitr")
+library("clustsig")
+library("ellipse")
+
+## import metadata file
+metaFile = read.table('MetaDataSubSampled_1T0.txt', header=T, sep='\t')
+rownames(metaFile) = metaFile[,1]
+#metaFile1 = as.matrix(metaFile)
+#rownames(metaFile1) = metaFile1[,7]
+#metaFile2 = as.data.frame(metaFile1)
+metaFile = metaFile[,c(4,6:9)]
+head(metaFile)
+
+sharedsubFile2 = read.table('stability.opti_mcc.0.03.subsample.shared')
+sharedsubFile = t(sharedsubFile2)
+rownames(sharedsubFile) = sharedsubFile[,1]
+colnames(sharedsubFile) = sharedsubFile[2,]
+dim(sharedsubFile) # [1] 87682    90
+#sharedsubFile = sharedsubFile[,2:90] # all samples
+sharedsubFile = sharedsubFile[4:87682,]
+sharedsubFile = sharedsubFile[,c(2:8,15:90)] # removing extra T0 samples
+class(sharedsubFile) <- "numeric"
+head(sharedsubFile)
+#colnames(sharedsubFile) = row.names(metaFile) #metaFile$smallID
+
+taxFile = read.table('stability.cons.taxonomy', header=T, sep='\t')
+head(taxFile)
+fix = taxFile[,3]
+
+fix = as.data.frame(fix)
+write.table(fix, 'taxOnly.csv', row.names=FALSE,col.names=FALSE)
+# open this in excel specifying ; as separators and add phylum, kingdom etc as col names
+# select all and copy and paste into git/notepad and save as .txt file (HeadedConsTax.txt)
+# read it back in
+
+taxo = read.table('HeadedConsTax.txt', header=T, sep='\t')
+# join original two cols from cons.tax file
+library(tibble)
+taxFile = taxFile[,1:2]
+taxo1 = add_column(taxo, taxFile$OTU, .before = 1) # rename
+taxo2 = add_column(taxo1, taxFile$Size, .before = 2) # rename
+head(taxo2)
+taxFile = taxo2
+colnames(taxFile)[2] <- "Size"
+colnames(taxFile)[1] <- "OTU"
+head(taxFile)
+# now it's ready, carry on with normal stuff..
+
+rownames(taxFile) = taxFile[,1]
+taxFile = taxFile[,2:8]
+taxFile = as.matrix(taxFile)
+head(taxFile)
+
+## Create phyloseq object
+
+#OTU = otu_table(sharedFile, taxa_are_rows = TRUE)
+OTUsub = otu_table(sharedsubFile, taxa_are_rows = TRUE)
+TAX = tax_table(taxFile)
+META = sample_data(metaFile)
+#physeq = phyloseq(OTU, TAX, META)
+physeqSub = phyloseq(OTUsub, TAX, META)
+
+## convert to relabund
+SubRel = transform_sample_counts(physeqSub, function(x) x / sum(x) )
+
+
+## readout phyloseq object, 
+dat <- psmelt(SubRel) #
+write.csv(dat, file='Trimmed.0.05.phyloSeq.csv')
+
+yy <- read.csv("Trimmed.0.05.phyloSeq.csv", header = TRUE)
+head(yy)
+# set factor orders
+# function for this saved in github R basics folder
+yy[["timepoint"]] <- setFactorOrder(yy[["timepoint"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+
+yy[["Treatment"]] <- setFactorOrder(yy[["Treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
+
+# make sure a dframe
+yy_df <- tbl_df(yy)
+
+require(ggplot2)
+ggplot(yy_df, aes(x=Sample, y=Abundance, fill=Family)) + 
+  geom_bar(stat="identity") + 
+  facet_wrap(~SamplingTime, scales="free") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1, size=9, vjust=0.4))
+
+
+#genera: Nitrosomonas, Nitrosococcus, Nitrobacter and Nitrococcus
+
+## look Nitrosomonas
+Nitrosomonas = subset_taxa(SubRel, Genus=="Nitrosomonas(100)")
+# none
+
+Nitrobacter = subset_taxa(SubRel, Genus=="Nitrobacter(100)")
+# none 
+# ====================== Nitrospira genus ========================== 
+SubRelNitroSpira = subset_taxa(SubRel, Genus=="Nitrospira(100)")
+
+dat1 <- psmelt(SubRelNitroSpira) #write out so can use ggplot
+write.csv(dat1, file='NitrospiraGenus.csv')
+# read back in
+NP <- read.csv("NitrospiraGenus.csv", header = TRUE)
+# function for this saved in github R basics folder
+NP[["timepoint"]] <- setFactorOrder(NP[["timepoint"]], c("Slurry", "T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+NP[["Treatment"]] <- setFactorOrder(NP[["Treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
+NP[["Phase"]] <- setFactorOrder(NP[["Phase"]], c("PreFlood", "Flood", "Recovery"))
+
+abund2 <- NP %>% 
+  group_by(smallID) %>%
+  summarise(abund = sum(Abundance), 
+            Tp = first(timepoint),
+            Tmt = first(Treatment),
+            Phase = first(Phase),
+            total = n())
+
+
+nsp <- ggplot(abund2, aes(x=Tp,y=abund, fill = Tmt, colour="black")) +
+  geom_boxplot(colour="black")
+nsp
+
+# make it pretty(ier)
+
+nsp2 <- nsp + labs(fill="Treatment") + # update legend titles.
+  facet_wrap(~Phase, scales = "free_x") +
+  ylab(expression(paste("Relative abundance ", italic(" Nitrospira "), "spp." ))) +
+  theme_linedraw()  +
+  theme(axis.text.x=element_text(size=13, colour="black")) +
+  theme(axis.text.y=element_text(size=12, colour="black")) +
+  theme(axis.title.y=element_text(size=14, colour="black")) +
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14)) +
+  guides(color = FALSE) +
+  #guides(fill = guide_legend(override.aes = list(size=1))) +
+  theme(legend.key.size = unit(1.5, "cm"),
+        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        strip.background =  element_rect(fill = "white"),
+        axis.title.x = element_blank()) 
+nsp2
+
+## ============================ look Nitrosospira genus =================================
+microSubRelNitrosopira = subset_taxa(SubRel, Genus=="Nitrosospira(100)")
+
+#write out so can use ggplot
+dat <- psmelt(microSubRelNitrosopira)
+write.csv(dat, file='NitrosospiraGenus.csv')
+# read back in
+NSP <- read.csv("NitrosospiraGenus.csv", header = TRUE)
+
+# set factor orders
+# function for this saved in github R basics folder
+NSP[["timepoint"]] <- setFactorOrder(NSP[["timepoint"]], c("Slurry", "T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+
+NSP[["Treatment"]] <- setFactorOrder(NSP[["Treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
+NSP[["Phase"]] <- setFactorOrder(NSP[["Phase"]], c("PreFlood", "Flood", "Recovery"))
+
+
+# now make new df called abundtot
+# grouping samples by name, adding up Abundance data
+# and putting first occurence of SamplingTime
+# and Treatment.A as will be same for each group in my case
+library(dplyr)
+abundTot <- NSP %>% 
+  group_by(smallID) %>%
+  summarise(abund = sum(Abundance), 
+            Tp = first(timepoint),
+            Tmt = first(Treatment),
+            Phase = first(Phase),
+            total = n())
+
+
+nsp <- ggplot(abundTot, aes(x=Tp,y=abund, fill = Tmt, colour="black")) +
+  geom_boxplot(colour="black")
+nsp
+
+# make it pretty(ier)
+
+nsp2 <- nsp + labs(fill="Treatment") + # update legend titles.
+  facet_wrap(~Phase, scales = "free_x") +
+  ylab(expression(paste("Relative abundance ", italic(" Nitrosospira "), "spp." ))) +
+  theme_linedraw()  +
+  theme(axis.text.x=element_text(size=13, colour="black")) +
+  theme(axis.text.y=element_text(size=12, colour="black")) +
+  theme(axis.title.y=element_text(size=14, colour="black")) +
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14)) +
+  guides(color = FALSE) +
+  #guides(fill = guide_legend(override.aes = list(size=1))) +
+  theme(legend.key.size = unit(1.5, "cm"),
+  strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+  strip.background =  element_rect(fill = "white"),
+  axis.title.x = element_blank()) 
+nsp2
+
+### copio and oligotrophs
+
+
+# Acidobacteria(100)
+## look phylum Acidobacteria(100)
+microSubRelAcido = subset_taxa(SubRel, Phylum=="Acidobacteria(100)")
+BarAcido <- plot_bar(microSubRelAcido, fill="Class", title="Acidobacteria")
+## changes scale/day so cant see difference really so just use all together
+BarAcido + facet_wrap(~timepoint, scales="free") + theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1, size=9, vjust=0.4))
+
+dat <- psmelt(microSubRelAcido)
+write.csv(dat, file='AcidobacteriaPhylum.csv')
+# read back in
+acid <- read.csv("AcidobacteriaPhylum.csv", header = TRUE)
+
+acid[["timepoint"]] <- setFactorOrder(acid[["timepoint"]], c("Slurry", "T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+acid[["Treatment"]] <- setFactorOrder(acid[["Treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
+acid[["Phase"]] <- setFactorOrder(acid[["Phase"]], c("PreFlood", "Flood", "Recovery"))
+
+# now make new df called abundtot
+# grouping samples by name, adding up Abundance data
+# and putting first occurence of SamplingTime
+
+abundTot <- acid %>% 
+  group_by(Sample) %>%
+  summarise(abund = sum(Abundance), 
+            Tp = first(timepoint),
+            Tmt = first(Treatment),
+            Phase = first(Phase),
+            total = n())
+
+Ac <- ggplot(abundTot, aes(x=Tp,y=abund, fill = Tmt, colour="black")) +
+  geom_boxplot(colour="black")
+Ac
+
+# make it pretty(ier)
+
+Ac2 <- Ac + labs(fill="Treatment") + # update legend titles.
+  facet_wrap(~Phase, scales = "free_x") +
+  ylab(expression(paste("Relative abundance ", italic(" Acidobacteria")))) +
+  theme_linedraw()  +
+  theme(axis.text.x=element_text(size=13, colour="black")) +
+  theme(axis.text.y=element_text(size=12, colour="black")) +
+  theme(axis.title.y=element_text(size=14, colour="black")) +
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14)) +
+  guides(color = FALSE) +
+  #guides(fill = guide_legend(override.aes = list(size=1))) +
+  theme(legend.key.size = unit(1.5, "cm"),
+        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        strip.background =  element_rect(fill = "white"),
+        axis.title.x = element_blank()) 
+
+Ac2
+
+
+# =============================================== Bacteroidetes(100) ========================
+## look phylum Bacteroidetes(100)
+microSubRelBacto = subset_taxa(SubRel, Phylum=="Bacteroidetes(100)")
+
+dat <- psmelt(microSubRelBacto)
+write.csv(dat, file='BacteriodetesPhylum.csv')
+# read back in
+bac <- read.csv("BacteriodetesPhylum.csv", header = TRUE)
+
+bac[["timepoint"]] <- setFactorOrder(bac[["timepoint"]], c("Slurry", "T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+bac[["Treatment"]] <- setFactorOrder(bac[["Treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
+bac[["Phase"]] <- setFactorOrder(bac[["Phase"]], c("PreFlood", "Flood", "Recovery"))
+
+# now make new df called abundtot
+# grouping samples by name, adding up Abundance data
+# and putting first occurence of SamplingTime
+
+abundTot <- bac %>% 
+  group_by(Sample) %>%
+  summarise(abund = sum(Abundance), 
+            Tp = first(timepoint),
+            Tmt = first(Treatment),
+            Phase = first(Phase),
+            total = n())
+
+Ac <- ggplot(abundTot, aes(x=Tp,y=abund, fill = Tmt, colour="black")) +
+  geom_boxplot(colour="black")
+Ac
+
+# make it pretty(ier)
+
+Ac2 <- Ac + labs(fill="Treatment") + # update legend titles.
+  facet_wrap(~Phase, scales = "free_x") +
+  ylab(expression(paste("Relative abundance ", italic(" Bacteriodetes")))) +
+  theme_linedraw()  +
+  theme(axis.text.x=element_text(size=13, colour="black")) +
+  theme(axis.text.y=element_text(size=12, colour="black")) +
+  theme(axis.title.y=element_text(size=14, colour="black")) +
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14)) +
+  guides(color = FALSE) +
+  #guides(fill = guide_legend(override.aes = list(size=1))) +
+  theme(legend.key.size = unit(1.5, "cm"),
+        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        strip.background =  element_rect(fill = "white"),
+        axis.title.x = element_blank()) 
+Ac2
+
+# ================ Betaproteobacteria ===================================
+## look class Betaproteobacteria(100)
+microSubRelBetaP = subset_taxa(SubRel, Class=="Betaproteobacteria(100)")
+dat <- psmelt(microSubRelBetaP) # melt to readout
+write.csv(dat, file='BetaproteobacteriaClass.csv') # write out
+# read back in
+bet <- read.csv("BetaproteobacteriaClass.csv", header = TRUE)
+
+bet[["timepoint"]] <- setFactorOrder(bet[["timepoint"]], c("Slurry", "T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+bet[["Treatment"]] <- setFactorOrder(bet[["Treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
+bet[["Phase"]] <- setFactorOrder(bet[["Phase"]], c("PreFlood", "Flood", "Recovery"))
+
+# now make new df called abundtot
+# grouping samples by name, adding up Abundance data
+# and putting first occurence of SamplingTime
+
+abundTot <- bet %>% 
+  group_by(Sample) %>%
+  summarise(abund = sum(Abundance), 
+            Tp = first(timepoint),
+            Tmt = first(Treatment),
+            Phase = first(Phase),
+            total = n())
+
+Ac <- ggplot(abundTot, aes(x=Tp,y=abund, fill = Tmt, colour="black")) +
+  geom_boxplot(colour="black")
+Ac
+
+# make it pretty(ier)
+
+Ac2 <- Ac + labs(fill="Treatment") + # update legend titles.
+  facet_wrap(~Phase, scales = "free_x") +
+  ylab(expression(paste("Relative abundance ", italic(" Betaproteobacteria")))) +
+  theme_linedraw()  +
+  theme(axis.text.x=element_text(size=13, colour="black")) +
+  theme(axis.text.y=element_text(size=12, colour="black")) +
+  theme(axis.title.y=element_text(size=14, colour="black")) +
+  theme(legend.text = element_text(size = 12)) +
+  theme(legend.title = element_text(size = 14)) +
+  guides(color = FALSE) +
+  #guides(fill = guide_legend(override.aes = list(size=1))) +
+  theme(legend.key.size = unit(1.5, "cm"),
+        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        strip.background =  element_rect(fill = "white"),
+        axis.title.x = element_blank()) 
+Ac2
+
+
