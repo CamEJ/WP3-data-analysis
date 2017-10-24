@@ -1,0 +1,131 @@
+# Running File - analysis of WP3 cDNA 16S rrna data using mothur
+
+# location of data
+# http://cgr.liv.ac.uk/illum/LIMS14323_0faa39aaa6a3349c/
+# zipped folder of these is stored on my google drive and on desktop of SuperMicro comp in FA lab
+
+# downloaded all files using script from liverpool:
+
+wget -r --cut-dirs=2 -np -nH -R "index.html*" http://cgr.liv.ac.uk/illum/LIMS14323_0faa39aaa6a3349c/Trimmed/
+
+# Then unzipped using
+gunzip -r trimmed
+
+# then moved all fastq files from subfolders into parent folder
+# first cd to parent directory of subfodlers then:
+# then do this where folder you put is name of folder you want them to go into
+mv **/*.fastq /home/femlab/Cam/WP3-DNA-16s/
+
+# searched for all R0 files and deleted 
+
+# then began mothur
+
+./mothur
+
+make.file(inputdir=fastq, type=fastq, prefix=stability)
+
+# altered this a little in excel to give better names. 
+# file called makingStabilityFiles.xls
+
+# now make contigs
+make.contigs(file=stability.files, processors=30)
+
+# output
+Group count: 
+Mock	173013
+Tmt1a_T0	105830
+Tmt1a_T11	233135
+Tmt1a_T13	185531
+Tmt1a_T2	256409
+Tmt1a_T3	132313
+Tmt1a_T7	195117
+Tmt1a_T8	282894
+Tmt1b_T0	295010
+Tmt1b_T11	226163
+Tmt1b_T13	227396
+Tmt1b_T2	182149
+Tmt1b_T3	203390
+Tmt1b_T7	138184
+Tmt1b_T8	166151
+Tmt1c_T0	215907
+Tmt1c_T11	299989
+Tmt1c_T13	169890
+Tmt1c_T2	136545
+Tmt1c_T3	170819
+Tmt1c_T7	167102
+Tmt1c_T8	218808
+Tmt2a_T0	139549
+Tmt2a_T11	182687
+Tmt2a_T13	125510
+Tmt2a_T2	214955
+Tmt2a_T3	280823
+Tmt2a_T7	250337
+Tmt2a_T8	218725
+Tmt2b_T0	176080
+Tmt2b_T11	216994
+Tmt2b_T13	269644
+Tmt2b_T2	259304
+Tmt2b_T3	165128
+Tmt2b_T7	261288
+Tmt2b_T8	192359
+Tmt2c_T0	168812
+Tmt2c_T11	175929
+Tmt2c_T13	209117
+Tmt2c_T2	180387
+Tmt2c_T3	168194
+Tmt2c_T7	266428
+Tmt2c_T8	174480
+Tmt3a_T11	113235
+Tmt3a_T13	144362
+Tmt3a_T3	134020
+Tmt3a_T7	239326
+Tmt3a_T8	262455
+Tmt3b_T11	176498
+Tmt3b_T13	196293
+Tmt3b_T3	155647
+Tmt3b_T7	140501
+Tmt3b_T8	202408
+Tmt3c_T11	175713
+Tmt3c_T13	154346
+Tmt3c_T3	180822
+Tmt3c_T7	352207
+Tmt3c_T8	153197
+Tmt4a_T11	186917
+Tmt4a_T13	201215
+Tmt4a_T3	213442
+Tmt4a_T7	205259
+Tmt4a_T8	162036
+Tmt4b_T11	316252
+Tmt4b_T13	209452
+Tmt4b_T3	207032
+Tmt4b_T7	216283
+Tmt4b_T8	126545
+Tmt4c_T11	179281
+Tmt4c_T13	231190
+Tmt4c_T3	165427
+Tmt4c_T7	206083
+Tmt4c_T8	132547
+
+Total of all groups is 14418466
+
+#have a look
+mothur > summary.seqs(fasta=stability.trim.contigs.fasta, processors=30)
+
+		Start	End	NBases	Ambigs	Polymer	NumSeqs
+Minimum:	1	29	29	0	2	1
+2.5%-tile:	1	250	250	0	3	360462
+25%-tile:	1	253	253	0	4	3604617
+Median: 	1	253	253	0	5	7209234
+75%-tile:	1	253	253	0	5	10813850
+97.5%-tile:	1	254	254	5	6	14058005
+Maximum:	1	500	500	111	250	14418466
+Mean:	1	252.268	252.268	0.410639	4.63152
+# of Seqs:	14418466
+
+Output File Names: 
+/home/femlab/Cam/WP3_cDNA/stability.trim.contigs.summary
+
+It took 14 secs to summarize 14418466 sequences.
+# next cut out ambig bases and wrong length seqs
+mothur > screen.seqs(fasta=stability.trim.contigs.fasta, group=stability.contigs.groups, maxambig=0, maxlength=300, minlength=200)
+
