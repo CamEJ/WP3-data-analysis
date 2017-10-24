@@ -1,4 +1,5 @@
 
+
 # plotting total respiration response microresp
 
 library(ggplot2)
@@ -21,21 +22,23 @@ g[["time"]] <- setFactorOrder(g[["time"]], c("T0", "T1", "T2", "T3", "T4", "T5",
 
 # order of treatments. 
 g[["treatment"]] <- setFactorOrder(g[["treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
-# 
 
+# write out for future use:
 write.csv(g, "totalSubsInducedRespirationResponse.csv")
 
+
+# plot
 c <- ggplot(g, aes(factor(treatment), tot, fill = factor(treatment))) +
   
   ## + geom_boxplot so it knows what type of plot
   # and put colour = black to make lines of box black. 
   
-  geom_boxplot(colour="black") +
-  scale_fill_manual(values=c("black", "chocolate4", "slateblue", "olivedrab"))
+  geom_boxplot(colour="black") + 
+  scale_fill_manual(values=c("black", "chocolate4", "slateblue", "olivedrab")) # set WP3 colours
 c4 = c + facet_wrap(~time, ncol = 3)
 
 
-rep <- c4 + labs(fill="    Treatment ") +
+rep <- c4 + labs(fill="    Treatment ") + # add labels
   ylab(expression(paste('Total substrate induced respiration (', mu, 'g ', C-CO[2],' ', g^-1, 'soil ', hr^-1, ')', '\n' )))+
   
   ## specify labels for axes and plot title if required
@@ -67,21 +70,22 @@ rep + guides(fill = guide_legend(ncol=2))
 
 rep + guides(fill=FALSE)
 
-# --------------------- scatter plot of the same
+# --------------------- scatter plot of the same (this is what i put in thesis) ------------------------
 
 
-  
-  c <- ggplot(g, aes(factor(treatment), tot, fill = factor(treatment))) +
+c <- ggplot(g, aes(factor(treatment), tot, fill = factor(treatment))) +
   
   ## + geom_boxplot so it knows what type of plot
   # and put colour = black to make lines of box black. 
   
-    geom_point(shape=21, size = 5) +
-  scale_fill_manual(values=c("black", "chocolate4", "slateblue", "olivedrab"))
-c4 = c + facet_wrap(~time, ncol = 3)
+  geom_point(shape=21, size = 5) +
+  scale_fill_manual(values=c("black", "chocolate4", "slateblue", "olivedrab")) # wp3 colours 
+c4 = c + facet_wrap(~time, ncol = 4) # facet wrap by timepoint
 
 
-c4
+c4 # print and check
+
+# now edit labels and axis text etc. 
 rep <- c4 + labs(fill="    Treatment ") +
   ylab(expression(paste('Total substrate induced respiration (', mu, 'g ', C-CO[2],' ', g^-1, 'soil ', hr^-1, ')', '\n' )))+
   
@@ -100,18 +104,18 @@ rep <- c4 + labs(fill="    Treatment ") +
         axis.title.y=element_text(size=18, vjust=1, colour="black"),
         legend.text=element_text(size=15, vjust=0.5),
         legend.title=element_blank(),
-        legend.key.size=unit(1.2, "cm"),
+        legend.key.size=unit(1.2, "cm"), # inc size of legend
         axis.title.x=element_blank(),
-        #legend.direction = "horizontal",
+        legend.direction = "horizontal",
         strip.text.x = element_text(size = 18, colour = "black"),# change font of facet label
         strip.background =  element_rect(fill = "white"),
-        legend.position = c(1, 0), legend.justification = c(1, 0)
-  ) # remove grey backgroup of facet label
-
+       legend.position = "top" # put legend at the top 
+        #legend.position = c(1, 0), legend.justification = c(1, 0)
+  )
 rep
 
-rep + guides(fill = guide_legend(ncol=2))
-  
+#rep + guides(fill = guide_legend(ncol=2))
+
 
 
 
@@ -152,6 +156,6 @@ data_summary <- function(x) {
   return(c(y=m,ymin=ymin,ymax=ymax))
 }
 #Use a custom summary function :
-  
-  p + stat_summary(fun.data=data_summary, colour = "black", size=1)
-  
+
+p + stat_summary(fun.data=data_summary, colour = "black", size=1)
+
