@@ -49,7 +49,7 @@ nsp
 
 nsp2 <- nsp + labs(fill="Treatment") + # update legend titles.
   facet_wrap(~Phase, scales = "free_x") +
-  ylab(expression(paste("Relative abundance ", italic(" Nitrospira "), "spp." ))) +
+  ylab(expression(paste(italic(" Nitrospira "), "spp." ))) +
   theme_bw()  +
   theme(axis.text.x=element_text(size=13, colour="black")) +
   theme(axis.text.y=element_text(size=12, colour="black")) +
@@ -59,10 +59,12 @@ nsp2 <- nsp + labs(fill="Treatment") + # update legend titles.
   guides(color = FALSE) +
   #guides(fill = guide_legend(override.aes = list(size=1))) +
   theme(legend.key.size = unit(1.5, "cm"),
-        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
-        strip.background =  element_rect(fill = "white"),
+        #strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        #strip.background =  element_rect(fill = "white"),
+        strip.text.x = element_blank(),
+        strip.background =  element_blank(),
         axis.title.x = element_blank()) 
-nsp2
+nitros = nsp2
 
 ## ============================ look Nitrosospira genus =================================
 microSubRelNitrosopira = subset_taxa(SubRel, Genus=="Nitrosospira(100)")
@@ -103,7 +105,7 @@ nsp
 
 nsp2 <- nsp + labs(fill="Treatment") + # update legend titles.
   facet_wrap(~Phase, scales = "free_x") +
-  ylab(expression(paste("Relative abundance ", italic(" Nitrosospira "), "spp." ))) +
+  ylab(expression(paste(italic(" Nitrosospira "), "spp." ))) +
   theme_bw()  +
   theme(axis.text.x=element_text(size=13, colour="black")) +
   theme(axis.text.y=element_text(size=12, colour="black")) +
@@ -113,10 +115,12 @@ nsp2 <- nsp + labs(fill="Treatment") + # update legend titles.
   guides(color = FALSE) +
   #guides(fill = guide_legend(override.aes = list(size=1))) +
   theme(legend.key.size = unit(1.5, "cm"),
-        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
-        strip.background =  element_rect(fill = "white"),
+        #strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        #strip.background =  element_rect(fill = "white"),
+        strip.text.x = element_blank(),
+        strip.background =  element_blank(),
         axis.title.x = element_blank()) 
-nsp2
+nitroso = nsp2
 
 # ================== AOA ===================================
 # as many of these were unclassified and i found them searching 
@@ -128,6 +132,7 @@ OTU_thaum <- subset(yy, (OTU %in% c("Otu000007","Otu000016","Otu000023", "Otu000
 # melt to readout
 write.csv(OTU_thaum, file='ThaumarchaetoaSpp.csv') # write out
 # read back in
+OTU_thaum <- read.csv("ThaumarchaetoaSpp.csv", header = TRUE)
 
 bet = OTU_thaum
 
@@ -155,7 +160,7 @@ Ac
 
 Ac2 <- Ac + labs(fill="Treatment") + # update legend titles.
   facet_wrap(~Phase, scales = "free_x") +
-  ylab(expression(paste("Relative abundance ", italic(" Thaumarchaeota")))) +
+  ylab(expression(paste(italic(" Thaumarchaeota"), "spp."))) +
   theme_bw()  +
   theme(axis.text.x=element_text(size=13, colour="black")) +
   theme(axis.text.y=element_text(size=12, colour="black")) +
@@ -171,10 +176,16 @@ Ac2 <- Ac + labs(fill="Treatment") + # update legend titles.
 Ac2
 
 
+# =========== put the three in one plot ===========
+library("ggpubr")
+
+ggarrange(Ac2, nitros, nitroso, common.legend = TRUE, nrow=3,align="hv")
+
+
 
 #====================copio and oligotrophs ======================
 
-
+library(dplyr)
 # Acidobacteria(100)
 ## look phylum Acidobacteria(100)
 microSubRelAcido = subset_taxa(SubRel, Phylum=="Acidobacteria(100)")
@@ -237,13 +248,13 @@ microSubRelBacto = subset_taxa(SubRel, Phylum=="Bacteroidetes(100)")
 dat <- psmelt(microSubRelBacto)
 write.csv(dat, file='BacteriodetesPhylum.csv')
 # read back in
-bact <- read.csv("BacteriodetesPhylum.csv", header = TRUE)
+bac <- read.csv("BacteriodetesPhylum.csv", header = TRUE)
 
-Bacteroidia = subset(bact, Class=="Bacteroidia(100)" )
-rest = subset(bact, (Class %in% c("Flavobacteria(100) ","Sphingobacteria(100)")))
+#Bacteroidia = subset(bact, Class=="Bacteroidia(100)" )
+#rest = subset(bact, (Class %in% c("Flavobacteria(100) ","Sphingobacteria(100)")))
 
-bac = Bacteroidia
-bac= rest
+#bac = Bacteroidia
+#bac= rest
 bac[["timepoint"]] <- setFactorOrder(bac[["timepoint"]], c("Slurry", "T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
 bac[["Treatment"]] <- setFactorOrder(bac[["Treatment"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
 bac[["Phase"]] <- setFactorOrder(bac[["Phase"]], c("PreFlood", "Flood", "Recovery"))
@@ -278,8 +289,10 @@ Ac2 <- Ac + labs(fill="Treatment") + # update legend titles.
   guides(color = FALSE) +
   #guides(fill = guide_legend(override.aes = list(size=1))) +
   theme(legend.key.size = unit(1.5, "cm"),
-        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
-        strip.background =  element_rect(fill = "white"),
+        #strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        #strip.background =  element_rect(fill = "white"),
+        strip.text.x = element_blank(),
+        strip.background =  element_blank(),
         axis.title.x = element_blank()) 
 Ac2
 
@@ -333,14 +346,16 @@ Ac2 <- Ac + labs(fill="Treatment") + # update legend titles.
   guides(color = FALSE) +
   #guides(fill = guide_legend(override.aes = list(size=1))) +
   theme(legend.key.size = unit(1.5, "cm"),
-        strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
-        strip.background =  element_rect(fill = "white"),
+        #strip.text.x = element_text(size = 14, colour = "black"),# change font of facet label
+        #strip.background =  element_rect(fill = "white"),
+        strip.text.x = element_blank(),
+        strip.background =  element_blank(),
         axis.title.x = element_blank()) 
 Ac2
- 
+
 betaPro = Ac2
 
 # =========== in one 
 library("ggpubr")
 
-ggarrange(acido, bacto, betaPro, common.legend = TRUE, nrow=3)
+ggarrange(acido, bacto, betaPro, common.legend = TRUE, nrow=3,align="hv")
