@@ -129,3 +129,20 @@ It took 14 secs to summarize 14418466 sequences.
 # next cut out ambig bases and wrong length seqs
 mothur > screen.seqs(fasta=stability.trim.contigs.fasta, group=stability.contigs.groups, maxambig=0, maxlength=300, minlength=200)
 
+mothur > summary.seqs()
+Using /home/femlab/Cam/WP3_cDNA/stability.trim.contigs.good.fasta as input file for the fasta parameter.
+
+Using 30 processors.
+
+		Start	End	NBases	Ambigs	Polymer	NumSeqs
+Minimum:	1	200	200	0	3	1
+2.5%-tile:	1	251	251	0	3	309320
+25%-tile:	1	253	253	0	4	3093196
+Median: 	1	253	253	0	5	6186391
+75%-tile:	1	253	253	0	5	9279586
+97.5%-tile:	1	254	254	0	6	12063461
+Maximum:	1	300	300	0	250	12372780
+Mean:	1	252.616	252.616	0	4.61013
+# of Seqs:	12372780
+
+mothur > unique.seqs(fasta=stability.trim.contigs.good.fasta)
