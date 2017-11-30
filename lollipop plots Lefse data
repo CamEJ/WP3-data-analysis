@@ -1,0 +1,266 @@
+
+
+# lollipop plots Lefse data WP3
+# resources used: http://www.sthda.com/english/articles/24-ggpubr-publication-ready-plots/
+
+library(ggplot2)
+
+library(ggpubr)
+
+
+## phase 1
+
+# read in file made in original lefse plotting script
+
+LF <- read.table("LefseData_phase1.txt", header = TRUE, sep="\t" )
+head(LF)
+
+# in fact, i want rev of this as make plot easier to interpret
+LF$OTU <- factor(LF$OTU, levels = rev(LF$OTU))
+#LF[["Class"]] <- setFactorOrder(LF[["Class"]], c("Control", "Slurry", "Flood", "Flood+Slurry"))
+LF[["Class"]] <- setFactorOrder(LF[["Class"]], c("Control", "Slurry"))
+
+require(dplyr)
+
+# do averages of phylotypes (same classs and order)
+POO <- LF %>% 
+  group_by(Class, ClassOrd) %>% # in the order you want them grouped
+  summarise(MLDA = mean(LDA),
+            total = n())
+
+write.csv(POO, "lefsePhase1_avs_update.csv")
+# read this out and ordered SMALL to LARGE within each treatments
+# save csv and read back in:
+
+what <- read.csv("lefsePhase1_avs_update.csv", header = TRUE, sep="," )
+
+what$ordID <- as.factor(what$ordID)
+
+
+pp = ggdotchart(what, x = "ordID", y = "MLDA",
+           color = "Class",                                # Color by groups
+           palette = c("gray22", "chocolate4", "slateblue", "olivedrab"), # Custom color palette
+           sorting = "descending",                       # Sort value in descending order
+           add = "segments",                             # Add segments from y = 0 to dots
+           add.params = list(size = 2),
+           rotate = TRUE,                                # Rotate vertically
+           group = "Class",                                # Order by groups
+           dot.size = 8,                                 # Large dot size
+           label = round(what$total),                        # Add mpg values as dot labels
+           font.label = list(color = "white", size = 11, 
+                             vjust = 0.5),               # Adjust label parameters
+           ggtheme = theme_pubr()                        # ggplot2 theme
+           
+)
+
+
+oo = pp + scale_x_discrete(labels=what$ClassOrd) 
+
+
+
+k = oo +
+  #theme(axis.text.x=element_text(hjust=1, size=12, vjust=0.4, angle=90, colour="black")) +
+  #theme(axis.text.y=element_text(hjust=1, size=11, vjust=0.4, colour="black")) +
+  theme(axis.title.y=element_blank()) +
+  theme(axis.title.x=element_text(size=13, face="plain", colour="black")) +
+  labs(colour="  Treatment", y = "Mean LDA score (log 10)") +
+  theme(legend.title =element_text(size=13, colour="black")) +
+  theme(legend.text = element_text(size=13, colour="black"))# +
+#  guides(fill = guide_legend(override.aes = list(size=10)))
+
+k # print & save as pdf  Phase1_lollipop (or sth like that)
+
+
+phase1 = k
+phase1b = phase1 + guides(colour=FALSE)
+phase1c = phase1b + theme(axis.title.x=element_blank()) + ggtitle("Pre-flood Phase")
+
+# ============================= read in data - phase 2=========================
+
+
+LF <- read.table("LefseData_phase2.txt", header = TRUE, sep="\t" )
+head(LF)
+
+# set order to be by order of OTUs in original file
+LF$OTU <- factor(LF$OTU, levels = LF$OTU)
+
+# in fact, i want rev of this as make plot easier to interpret
+LF$OTU <- factor(LF$OTU, levels = rev(LF$OTU))
+LF[["Tmt"]] <- setFactorOrder(LF[["Tmt"]], c("Control", "Slurry", "Flood", "Slurry+Flood"))
+
+
+# ================ doing averages by taxa ============================= 
+require(dplyr)
+POO <- LF %>% 
+  group_by(Tmt, ClassOrd) %>% # in the order you want them grouped
+  summarise(MLDA = mean(LDA),
+            total = n())
+
+write.csv(POO, "lefsePhase2_avs_updated.csv")
+# read this out and ordered large to small in excel
+# altered any ugly labels eg unknown unknown
+what <- read.csv("lefsePhase2_avs_updated.csv", header = TRUE, sep="," )
+
+what$itOrd <- as.factor(what$itOrd)
+
+what[["Tmt"]] <- setFactorOrder(what[["Tmt"]], c("Control", "Slurry", "Flood", "Slurry+Flood"))
+
+
+pp = ggdotchart(what, x = "itOrd", y = "MLDA",
+                color = "Tmt",                                # Color by groups
+                palette = c("gray22", "chocolate4", "slateblue", "olivedrab"), # Custom color palette
+                sorting = "descending",                       # Sort value in descending order
+                add = "segments",                             # Add segments from y = 0 to dots
+                add.params = list(size = 2),
+                rotate = TRUE,                                # Rotate vertically
+                group = "Tmt",                                # Order by groups
+                dot.size = 8,                                 # Large dot size
+                label = round(what$total),                        # Add mpg values as dot labels
+                font.label = list(color = "white", size = 11, 
+                                  vjust = 0.5),               # Adjust label parameters
+                ggtheme = theme_pubr()                        # ggplot2 theme
+                
+)
+
+
+oo = pp + scale_x_discrete(labels=what$ClassOrd)
+
+
+
+k = oo +
+  #theme(axis.text.x=element_text(hjust=1, size=12, vjust=0.4, angle=90, colour="black")) +
+  #theme(axis.text.y=element_text(hjust=1, size=11, vjust=0.4, colour="black")) +
+  theme(axis.title.y=element_blank()) +
+  theme(axis.title.x=element_text(size=13, face="plain", colour="black")) +
+  labs(colour="  Treatment", y = "Mean LDA score (log 10)") +
+  theme(legend.title =element_text(size=15, colour="black")) +
+  theme(legend.text = element_text(size=13, colour="black"))+
+  guides(fill = guide_legend(override.aes = list(size=13)))
+
+k # print & save as pdf  Phase2_lollipop (or sth like that)
+
+
+phase2 = k
+
+
+phase2a = phase2 + guides(colour=FALSE)+ ggtitle("Flooded Phase")
+
+# ============================= read in data - phase 3=========================
+
+
+LF <- read.table("LefseData_phase3.txt", header = TRUE, sep="\t" )
+head(LF)
+
+# set order to be by order of OTUs in original file
+LF$OTU <- factor(LF$OTU, levels = LF$OTU)
+
+# in fact, i want rev of this as make plot easier to interpret
+LF$OTU <- factor(LF$OTU, levels = rev(LF$OTU))
+LF[["Tmt"]] <- setFactorOrder(LF[["Tmt"]], c("Control", "Slurry", "Flood", "Slurry+Flood"))
+
+
+# ================ doing averages by taxa ============================= 
+require(dplyr)
+POO <- LF %>% 
+  group_by(Tmt, ClassOrd) %>% # in the order you want them grouped
+  summarise(MLDA = mean(LDA),
+            total = n())
+
+write.csv(POO, "lefsePhase3_avs_updated.csv")
+# read this out and ordered large to small in excel
+# altered any ugly labels eg unknown unknown
+# give col1 the header 'itOrd'
+what <- read.csv("lefsePhase3_avs_updated.csv", header = TRUE, sep="," )
+
+what$itOrd <- as.factor(what$itOrd)
+
+what[["Tmt"]] <- setFactorOrder(what[["Tmt"]], c("Control", "Slurry", "Flood", "Slurry+Flood"))
+
+
+pp = ggdotchart(what, x = "itOrd", y = "MLDA",
+                color = "Tmt",                                # Color by groups
+                palette = c("gray22", "chocolate4", "slateblue", "olivedrab"), # Custom color palette
+                sorting = "descending",                       # Sort value in descending order
+                add = "segments",                             # Add segments from y = 0 to dots
+                add.params = list(size = 2),
+                rotate = TRUE,                                # Rotate vertically
+                group = "Tmt",                                # Order by groups
+                dot.size = 8,                                 # Large dot size
+                label = round(what$total),                        # Add mpg values as dot labels
+                font.label = list(color = "white", size = 11, 
+                                  vjust = 0.5),               # Adjust label parameters
+                ggtheme = theme_pubr()                        # ggplot2 theme
+                
+)
+
+
+oo = pp + scale_x_discrete(labels=what$ClassOrd)
+
+
+
+k = oo +
+  #theme(axis.text.x=element_text(hjust=1, size=12, vjust=0.4, angle=90, colour="black")) +
+  #theme(axis.text.y=element_text(hjust=1, size=11, vjust=0.4, colour="black")) +
+  theme(axis.title.y=element_blank()) +
+  theme(axis.title.x=element_text(size=13, face="plain", colour="black")) +
+  labs(colour="  Treatment", y = "Mean LDA score (log 10)") +
+  theme(legend.title =element_text(size=15, colour="black")) +
+  theme(legend.text = element_text(size=13, colour="black")) +
+  guides(fill = guide_legend(override.aes = list(size=13)))
+
+k # print & save as pdf  Phase2_lollipop (or sth like that)
+
+
+phase3 = k
+
+phase3b = phase3 + guides(colour=FALSE) + ggtitle("Recovery Phase")
+
+# ==================================
+
+# had to do some crazy stuff and make a fake plot so stop plot on its
+#own from stretching
+
+fake = what[1:4,]
+fake = what[c(1,8,14,19),]
+
+take = ggdotchart(fake, x = "itOrd", y = "MLDA",
+                color = "Tmt",                                # Color by groups
+                palette = c("gray22", "chocolate4", "slateblue", "olivedrab"), # Custom color palette
+                sorting = "descending",                       # Sort value in descending order
+                add = "segments",                             # Add segments from y = 0 to dots
+                add.params = list(size = 2),
+                rotate = TRUE,                                # Rotate vertically
+                group = "Tmt",                                # Order by groups
+                dot.size = 8,                                 # Large dot size
+                #label = round(what$total),                        # Add mpg values as dot labels
+                font.label = list(color = "white", size = 11, 
+                                  vjust = 0.5),               # Adjust label parameters
+                ggtheme = theme_pubr()                        # ggplot2 theme
+                
+)
+
+fillit = take + guides(colour=FALSE)
+# ================ trying to combine
+
+
+left = ggarrange(phase1c, phase3b,
+          labels = c("A", "C"),
+          nrow = 2, ncol=1,
+          heights=c(1,1.1)
+)
+
+left
+
+right = ggarrange(fillit, phase2a, 
+                  labels = c("z", "B"),
+                  nrow = 2, ncol=1,
+                  heights=c(1,9))
+
+
+#ggarrange(left, right, ncol=2,nrow=1,
+      #    heights=c(2,1))
+
+ggarrange(left, right, ncol=2)
+
+
+
