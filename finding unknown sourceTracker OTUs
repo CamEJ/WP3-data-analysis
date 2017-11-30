@@ -1,7 +1,7 @@
 # finding unknown sourceTracker OTUs
 
-taxFile = read.table('WP3_trimmed_biom_correctSamplesOnly.txt', header=T, sep='\t')
-data = taxFile
+data = read.table('WP3_trimmed_biom_correctSamplesOnly.txt', header=T, sep='\t')
+
 head(data)
 
 # use dlpyr to make a new dataframe including only OTUs that were 0
@@ -12,3 +12,7 @@ result <- data %>%
   filter(Slurry == 0 & T0_Tmt1_a  == 0 & T0_Tmt1_b == 0 & T0_Tmt1_c == 0) 
 
 write.csv(result, "SourceTracker_FindingUnknowns.csv")
+
+# you need to think about plotting this again by time I reckon
+
+
