@@ -125,9 +125,9 @@ PieNos = as.data.frame(PieNos)
 
 # in order to group and summarise samples (ie average) we will add metadata back
 # and this will allow grouping of samples
-  metadata$id = row.names(metadata) 
-  PieNos$id = row.names(PieNos)
-  zz <- merge(PieNos, metadata, by = "id")
+  metadata$id = row.names(metadata) # change row name to id
+  PieNos$id = row.names(PieNos) # do the same, change PieNos row name to id
+  zz <- merge(PieNos, metadata, by = "id") # now we can merge into same dataset as they have same row name
 
   require(dplyr)
   # grouping and summarising variables within a df called 'zz'
@@ -144,7 +144,7 @@ PieNos = as.data.frame(PieNos)
                           varSoil = sd(soil), 
                           varUnknown = sd(Unknown))
  
-              write.csv(PieAvs, "averagesOutPutPiesSourceTracker.csv")
+              write.csv(PieAvs, "averagesOutPutPiesSourceTracker.csv") # write this data out. 
               
 # ============================= and now to plotting =============================== # 
 setwd("~/Desktop/sourcetracker-1.0.1")
