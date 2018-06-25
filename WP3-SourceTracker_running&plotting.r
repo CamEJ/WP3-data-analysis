@@ -13,7 +13,7 @@
   # a) a column called 'SourceSink' saying if your sample is a source or a sink.
   # b) a column called 'Env' saying which environment your sample is from
   # c) a column called Description which you can use to describe your samples
-  # d) any samples you do now want to be analysed as a source or sink should 
+  # d) any samples you don't now want to be analysed as a source or sink should 
   # have NA in these 3 columns. 
 
 # head(metadata)
@@ -51,7 +51,7 @@ metadata <- read.table('metadata2slurry.txt',sep='\t',h=T,row.names=1)
 otus <- read.table('OTUtable_2slurry.txt',sep='\t', header=T,row.names=1,check=F,skip=1,comment='')
 head(otus)
 dim(otus)
-otus2 = otus[,c(1:8,15:90)] # removing extra T0 samples & taxo info as non in eg data
+otus2 = otus[,c(1:8,15:90)] # removing extra T0 samples & also taxo info as not in their eg data
 head(otus2) # check
 otus <- t(as.matrix(otus2))
 
