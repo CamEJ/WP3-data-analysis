@@ -152,17 +152,24 @@ pies <- read.csv('averagesOutPutPiesSourceTracker.csv',h=T,row.names=1)
 
 library(ggplot2) 
 library(reshape2)
-              
-# df = pies[,1:6]  
-# mdf = as.data.frame(df)
-# df[["time"]] <- setFactorOrder(df[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
-# 
-# row.names(mdf)=mdf$Description
-# 
-# mdf[["time"]] <- setFactorOrder(mdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
-# 
-# mmdf = melt(mdf)
-# mmdf[["time"]] <- setFactorOrder(mmdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+
+### getting data nice ### 
+
+df = pies[,1:6]  
+mdf = as.data.frame(df)
+df[["time"]] <- setFactorOrder(df[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+
+row.names(mdf)=mdf$Description
+
+mdf[["time"]] <- setFactorOrder(mdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+
+mmdf = melt(mdf)
+mmdf[["time"]] <- setFactorOrder(mmdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+
+write.csv(mmdf, "pieDataToOrder.csv") # write out and then order by hand. 
+
+# once in correct order put dummy column to keep them in that order for ggplot :) 
+
 
 
 pie <- read.table('PieDataordered.txt',sep='\t',h=T)
