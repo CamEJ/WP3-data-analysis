@@ -166,15 +166,15 @@ mdf[["time"]] <- setFactorOrder(mdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "
 mmdf = melt(mdf)
 mmdf[["time"]] <- setFactorOrder(mmdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
 
-write.csv(mmdf, "pieDataToOrder.csv") # write out and then order by hand. 
+write.table(mmdf, "pieDataToOrder.txt") # write out for future use
 
-# once in correct order put dummy column to keep them in that order for ggplot :) 
-
-
+# ======== read back in to continue with plotting ============== 
 
 pie <- read.table('PieDataordered.txt',sep='\t',h=T)
 
+# run SetFactorOrder.R
 pie[["time"]] <- setFactorOrder(pie[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
+
 # set factor order of id based on order of time
 pie$id = factor(pie$id, level =  unique(pie$id[order(pie$time)]))
 
@@ -252,14 +252,11 @@ Flood = ggplot(PSF, aes(x=time, y=prop*100, fill=source)) +
 
 Flood
 
+# again extend margins to show percentage labels
 library(grid)
 gt <- ggplot_gtable(ggplot_build(Flood))
 gt$layout$clip[gt$layout$name == "panel"] <- "off"
 grid.draw(gt)
-
-
-
-
 
 
 
