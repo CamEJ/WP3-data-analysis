@@ -152,6 +152,7 @@ pies <- read.csv('averagesOutPutPiesSourceTracker.csv',h=T,row.names=1)
 
 library(ggplot2) 
 library(reshape2)
+# run SetFactorOrder.R
 
 ### getting data nice ### 
 
@@ -166,7 +167,7 @@ mdf[["time"]] <- setFactorOrder(mdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "
 mmdf = melt(mdf)
 mmdf[["time"]] <- setFactorOrder(mmdf[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
 
-write.table(mmdf, "pieDataToOrder.txt") # write out for future use
+write.table(mmdf, "pieDataToOrder.txt", sep='\t') # write out for future use
 
 # ======== read back in to continue with plotting ============== 
 
