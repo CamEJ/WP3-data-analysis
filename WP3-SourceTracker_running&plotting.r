@@ -177,13 +177,20 @@ pie <- read.table('PieDataordered.txt',sep='\t',h=T)
 pie[["time"]] <- setFactorOrder(pie[["time"]], c("T0", "T2", "T3", "T5", "T7", "T8", "T11", "T13"))
 # set factor order of id based on order of time
 pie$id = factor(pie$id, level =  unique(pie$id[order(pie$time)]))
-# =============== subset by treatment to make one plot for each tmt ============== #
-library(dplyr)
-PS = subset(pie, (treatment %in% c("Slurry")))
-PS$Day = factor(PS$Day)
 
+
+# =============== subset by treatment to make one plot for each tmt ============== #
+
+library(dplyr)
+
+## make a dataset called PS which contains all slurry treated samples that WEREN'T flooded
+PS = subset(pie, (treatment %in% c("Slurry"))) 
+PS$time = factor(PS$time)
+
+## make a dataset called PSF which contains all SLURRY+FLOOD 
+# samples only by removing slurry only treated samples  
 PSF =  subset(pie, !(treatment %in% c("Slurry")))
-PSF$Day = factor(PSF$Day)
+PSF$time = factor(PSF$time)
 
 # set labels
 myLabs = c("0 ", "3 ", "6 ", "15 ", "29 ",
@@ -191,9 +198,10 @@ myLabs = c("0 ", "3 ", "6 ", "15 ", "29 ",
 
 # plot slurry (tmt2)
 
-Splot = ggplot(PS, aes(x=Day, y=prop*100, fill=source)) + # time prop by 100 to give %
+Splot = ggplot(PS, aes(x=time, y=prop*100, fill=source)) + # time prop by 100 to give %
   geom_bar(stat="identity") + # add bars
-  geom_text( # adding labels to end of bars
+  geom_text( # adding labels to end of bars. have to fill gaps with spaces ("") to = no of samples
+    # or will give error: Error: Aesthetics must be either length 1 or the same as the data (18): label, x, y, fill
     aes(label = c("26.9%", "", "", "24.3%","", "", " 2.8%", "", ""," 1.0%", "", ""," 0.9%", "", ""," 0.3%","", "", " 0.1%", "", "",  " 0.2%", "", "")),    
     size = 5, hjust = -0.05,  position = "stack", inherit.aes = TRUE, colour="black") +
   coord_flip()+ # flip axes
@@ -222,11 +230,11 @@ grid.draw(gt)
 
 # ============= plot flood + slurry data now =================
 
-Flood = ggplot(PSF, aes(x=Day, y=prop*100, fill=source)) + 
+Flood = ggplot(PSF, aes(x=time, y=prop*100, fill=source)) + 
   geom_bar(stat="identity") + 
- geom_text(
-  aes(label = c(rep("",6), "12.5%", "", "", " 5.4%","", "", " 2.4%", "", ""," 0.6%", "", ""," 0.2%", "", ""," 0.4%","", "")),
-  size = 5, hjust = -0.05,  position = "stack", inherit.aes = TRUE, colour="black") +
+  geom_text(
+    aes(label = c( "12.5%", "", "", " 5.4%","", "", " 2.4%", "", ""," 0.6%", "", ""," 0.2%", "", ""," 0.4%","", "")),
+    size = 5, hjust = -0.05,  position = "stack", inherit.aes = TRUE, colour="black") +
   coord_flip()+ # flip axes
   theme_classic() + #change theme
   theme(axis.text.x=element_text(size=15, colour="black"),
@@ -248,6 +256,9 @@ library(grid)
 gt <- ggplot_gtable(ggplot_build(Flood))
 gt$layout$clip[gt$layout$name == "panel"] <- "off"
 grid.draw(gt)
+
+
+
 
 
 
