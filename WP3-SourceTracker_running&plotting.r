@@ -275,6 +275,8 @@ WP3Cols <- define_palette(
   background = "white" #defining a grey-ish background 
 )
 
-# set new col theme as current
+# set new col theme as current 
 
 ggthemr(WP3Cols)   
+
+# and recall plots to get colours to change
